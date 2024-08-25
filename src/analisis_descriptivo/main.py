@@ -69,10 +69,27 @@ vars_num = [
   "capital-gain",
   "capital-loss",
   "hours-per-week"
-] 
+]
+
 for var_num in vars_num:
   plt.figure(figsize = (12, 6))
-  sns.violinplot(x = 'class', y = var_num, data = datos, inner = None, palette = 'muted')
+  sns.violinplot(x = 'class', y = var_num, data = datos, inner = None)
   sns.boxplot(x = 'class', y = var_num, data = datos, width = 0.1)
   plt.title(f'Distribution of {var_num} by class')
   plt.show()
+
+# %%
+# Correlación entre las variables numéricas
+matriz_de_correlaciones = datos[vars_num].corr()
+
+plt.figure(figsize = (10, 8))
+sns.heatmap(
+  matriz_de_correlaciones, 
+  annot = True, 
+  cmap = 'coolwarm', 
+  vmin = -1, 
+  vmax = 1, 
+  fmt = '.2f',
+  linewidths = 0.5
+)
+plt.show()
