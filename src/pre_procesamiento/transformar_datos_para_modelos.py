@@ -3,6 +3,15 @@ from src.pre_procesamiento.carga_de_datos import cargar_datos_train_test
 import pandas as pd
 
 
+VARS_NUM = [
+  'age',
+  "fnlwgt",
+  "education-num",
+  "capital-gain",
+  "capital-loss",
+  "hours-per-week"
+]
+
 VARS_CATEGORICAS = [
   'workclass',         
   'education',         

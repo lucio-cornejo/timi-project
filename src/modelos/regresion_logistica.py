@@ -65,9 +65,9 @@ Comparar qué predictores tienen mayor efecto sobre
 la variable objetivo, 'class_>50K'
 """
 importance_df_scaled = pd.DataFrame({
-    'Predictor': datos_train_encoded.columns.difference([nombre_variable_target]),
-    # Coeficientes estandarizados
-    'Coeficiente': modelo.coef_[0]
+  'Predictor': datos_train_encoded.columns.difference([nombre_variable_target]),
+  # Coeficientes estandarizados
+  'Coeficiente': modelo.coef_[0]
 })
 importance_df_scaled = (importance_df_scaled
   .assign(abs_coef = lambda d: d['Coeficiente'].abs())
