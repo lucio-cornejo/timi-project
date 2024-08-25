@@ -56,6 +56,9 @@ X_test_std = estandarizador.transform(X_test)
 modelo = LogisticRegression().fit(X_train_std, y_train)
 print(f'Exactitud del modelo tras estandarización vía Z-score: {round(100 * modelo.score(X_test_std, y_test), 2)}%')
 
+# Matríz de confusión
+confusion_matrix(y_test, modelo.predict(X_test_std))
+
 # %%
 """
 Comparar qué predictores tienen mayor efecto sobre 
@@ -73,7 +76,3 @@ importance_df_scaled = (importance_df_scaled
 )
 
 importance_df_scaled.head(10)
-
-# %%
-""" Matríz de confusión """
-confusion_matrix(y_test, modelo.predict(X_test_std))
