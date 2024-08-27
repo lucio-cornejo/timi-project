@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 
 # %%
 # Cargar datos de entrenamiento y de test
-datos_train = pd.read_csv('data/datos_train_limpios_con_vacios.csv', encoding='utf-8')
-datos_test = pd.read_csv('data/datos_test_limpios_con_vacios.csv', encoding='utf-8')
+datos_train = pd.read_csv('data/datos_train_limpios_con_vacios.csv', encoding = 'utf-8')
+datos_test = pd.read_csv('data/datos_test_limpios_con_vacios.csv', encoding = 'utf-8')
 
 # %%
 datos_train.info()
@@ -16,7 +16,7 @@ datos_test.info()
 
 # %%
 # Reconstruir el conjunto de datos
-datos = pd.concat([datos_train, datos_test], ignore_index=True)
+datos = pd.concat([datos_train, datos_test], ignore_index = True)
 datos.info()
 
 # %%
@@ -33,8 +33,31 @@ vars_cat = [
   'class'
 ]
 
+ETIQUETA_CATEGORIA_PERDIDA = '?'
 for var_cat in vars_cat:
-  datos[var_cat] = pd.Categorical(datos[var_cat])
+  datos[var_cat] = pd.Categorical(datos[var_cat].fillna(ETIQUETA_CATEGORIA_PERDIDA))
+
+# %%
+"""
+Distribución/porcentajes de cada variable categórica
+"""
+num_observaciones = datos.shape[0]
+for var_cat in vars_cat:
+  porcentajes_var_cat = (datos
+    .groupby([var_cat]).size()
+    .reset_index(name = 'cantidad')
+    .sort_values(by = 'cantidad', ascending = False)
+    .assign(Porcentaje = lambda d: 100 * (d['cantidad'] / num_observaciones))
+  )
+
+  plt.figure(figsize = (12, 6))
+  sns.barplot(
+    x = var_cat, y = 'Porcentaje',
+    data = porcentajes_var_cat,
+    order = porcentajes_var_cat[var_cat]
+  )
+  plt.xticks(rotation = 45)
+  plt.show()
 
 # %%
 """
