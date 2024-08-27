@@ -1,5 +1,10 @@
 # Proyecto Timi
 
+- Las matrices de confusión se han creado siguiendo el siguiente
+orden entre filas y columnas: 
+
+![](https://cdn.prod.website-files.com/660ef16a9e0687d9cc27474a/662c42677529a0f4e97e4f96_644aea65cefe35380f198a5a_class_guide_cm08.png)
+
 ## Algunas posibles mejoras
 
 ### Limpieza de datos
