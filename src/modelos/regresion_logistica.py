@@ -20,7 +20,8 @@ datos
 datos_encoded = pd.get_dummies(
   datos, 
   columns = VARS_CATEGORICAS,
-  drop_first = True
+  drop_first = True,
+  dtype = 'int64'
 )
 datos_encoded
 
@@ -56,8 +57,11 @@ X_test_std = estandarizador.transform(X_test)
 modelo = LogisticRegression().fit(X_train_std, y_train)
 print(f'Exactitud del modelo tras estandarización vía Z-score: {round(100 * modelo.score(X_test_std, y_test), 2)}%')
 
+print('\nCantidades en la variable por predecir:')
+print(y_test.value_counts())
+
 # Matríz de confusión
-confusion_matrix(y_test, modelo.predict(X_test_std))
+confusion_matrix(y_test, modelo.predict(X_test_std), labels = [1, 0])
 
 # %%
 """

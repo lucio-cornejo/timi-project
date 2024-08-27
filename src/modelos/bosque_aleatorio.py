@@ -51,8 +51,11 @@ X_train, X_test, y_train, y_test = [
 modelo = RandomForestClassifier(n_estimators = 100).fit(X_train, y_train)
 print(f'Exactitud del modelo: {round(100 * modelo.score(X_test, y_test), 2)}%')
 
+print('\nCantidades en la variable por predecir:')
+print(y_test.value_counts())
+
 # Matríz de confusión
-confusion_matrix(y_test, modelo.predict(X_test))
+confusion_matrix(y_test, modelo.predict(X_test), labels = [1, 0])
 
 # %%
 """

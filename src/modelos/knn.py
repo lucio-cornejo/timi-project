@@ -33,7 +33,8 @@ datos[VARS_NUM] = min_max_scaler.fit_transform(datos[VARS_NUM])
 datos_encoded = pd.get_dummies(
   datos, 
   columns = VARS_CATEGORICAS,
-  drop_first = False
+  drop_first = False,
+  dtype = 'int64'
 )
 datos_encoded
 
@@ -87,5 +88,8 @@ num_optimo_de_vecinos
 modelo = KNeighborsClassifier(n_neighbors = num_optimo_de_vecinos).fit(X_train, y_train)
 print(f'Exactitud del modelo: {round(100 * modelo.score(X_test, y_test), 2)}%')
 
+print('\nCantidades en la variable por predecir:')
+print(y_test.value_counts())
+
 # Matríz de confusión
-confusion_matrix(y_test, modelo.predict(X_test))
+confusion_matrix(y_test, modelo.predict(X_test), labels = [1, 0])
