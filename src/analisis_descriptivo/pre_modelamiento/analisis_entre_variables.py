@@ -32,7 +32,7 @@ Comparar variables categóricas con la variable por predecir
 for var_cat in VARS_CATEGORICAS:
   if var_cat == 'class': continue
 
-  frecuencias = datos.groupby(['class', var_cat]).size().reset_index(name='Cantidad')
+  frecuencias = datos.groupby(['class', var_cat]).size().reset_index(name = 'Cantidad')
 
   # Frecuencias de 'class' en cada variable categórica diferente
   plt.figure(figsize = (12, 6))
@@ -74,3 +74,7 @@ sns.heatmap(
   linewidths = 0.5
 )
 plt.show()
+
+# %%
+# Gráficos de dispersión entre cada par de variables numéricas
+sns.pairplot(datos[VARS_NUMERICAS])
