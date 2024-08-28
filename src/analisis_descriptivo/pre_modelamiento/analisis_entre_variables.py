@@ -1,12 +1,18 @@
 # %%
+from src.pre_procesamiento.transformar_datos_para_analisis_descriptivo import (
+  VARS_NUMERICAS,
+  VARS_CATEGORICAS,
+  etiquetar_vacios_en_train_y_test
+)
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 # %%
-# Cargar datos de entrenamiento y de test
-datos_train = pd.read_csv('data/datos_train_limpios_con_vacios.csv', encoding = 'utf-8')
-datos_test = pd.read_csv('data/datos_test_limpios_con_vacios.csv', encoding = 'utf-8')
+# Cargar datos de entrenamiento y de test, donde los vacíos de las
+# variables categóricas han sido reemplazados por '?'
+datos_train, datos_test = etiquetar_vacios_en_train_y_test()
 
 # %%
 datos_train.info()
@@ -20,50 +26,10 @@ datos = pd.concat([datos_train, datos_test], ignore_index = True)
 datos.info()
 
 # %%
-# Variables categóricas
-vars_cat = [
-  'workclass',         
-  'education',         
-  'marital-status',
-  'occupation',        
-  'relationship',      
-  'race',              
-  'sex',               
-  'native-country',
-  'class'
-]
-
-ETIQUETA_CATEGORIA_PERDIDA = '?'
-for var_cat in vars_cat:
-  datos[var_cat] = pd.Categorical(datos[var_cat].fillna(ETIQUETA_CATEGORIA_PERDIDA))
-
-# %%
-"""
-Distribución/porcentajes de cada variable categórica
-"""
-num_observaciones = datos.shape[0]
-for var_cat in vars_cat:
-  porcentajes_var_cat = (datos
-    .groupby([var_cat]).size()
-    .reset_index(name = 'cantidad')
-    .sort_values(by = 'cantidad', ascending = False)
-    .assign(Porcentaje = lambda d: 100 * (d['cantidad'] / num_observaciones))
-  )
-
-  plt.figure(figsize = (12, 6))
-  sns.barplot(
-    x = var_cat, y = 'Porcentaje',
-    data = porcentajes_var_cat,
-    order = porcentajes_var_cat[var_cat]
-  )
-  plt.xticks(rotation = 45)
-  plt.show()
-
-# %%
 """
 Comparar variables categóricas con la variable por predecir
 """
-for var_cat in vars_cat:
+for var_cat in VARS_CATEGORICAS:
   if var_cat == 'class': continue
 
   frecuencias = datos.groupby(['class', var_cat]).size().reset_index(name='Cantidad')
@@ -72,29 +38,21 @@ for var_cat in vars_cat:
   plt.figure(figsize = (12, 6))
   sns.barplot(x = 'class', y = 'Cantidad', hue = var_cat, data = frecuencias)
   plt.title(f'Frecuencias de "class", por {var_cat}')
+  plt.xticks(rotation = 45)
   plt.show()
 
   # Frecuencias de las otras variables categóricas, en cada categoría de 'class'
   plt.figure(figsize = (12, 6))
   sns.barplot(x = var_cat, y = 'Cantidad', hue = 'class', data = frecuencias)
   plt.title(f'Frecuencias de {var_cat} por "class"')
+  plt.xticks(rotation = 45)
   plt.show()
 
 # %%
 """
 Comparar variables numéricas con la variable por predecir
 """
-# Variables numéricas
-vars_num = [
-  'age',
-  "fnlwgt",
-  "education-num",
-  "capital-gain",
-  "capital-loss",
-  "hours-per-week"
-]
-
-for var_num in vars_num:
+for var_num in VARS_NUMERICAS:
   plt.figure(figsize = (12, 6))
   sns.violinplot(x = 'class', y = var_num, data = datos, inner = None)
   sns.boxplot(x = 'class', y = var_num, data = datos, width = 0.1)
@@ -103,7 +61,7 @@ for var_num in vars_num:
 
 # %%
 # Correlación entre las variables numéricas
-matriz_de_correlaciones = datos[vars_num].corr()
+matriz_de_correlaciones = datos[VARS_NUMERICAS].corr()
 
 plt.figure(figsize = (10, 8))
 sns.heatmap(
