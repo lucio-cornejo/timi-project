@@ -8,6 +8,9 @@ from src.pre_procesamiento.transformar_datos_para_analisis_descriptivo import (
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.tools.tools import add_constant
+
 
 # %%
 # Cargar datos de entrenamiento y de test, donde los vacíos de las
@@ -78,3 +81,14 @@ plt.show()
 # %%
 # Gráficos de dispersión entre cada par de variables numéricas
 sns.pairplot(datos[VARS_NUMERICAS])
+
+# %%
+# Análisis de multicolinearidad entre predictores numéricos
+X = add_constant(datos[VARS_NUMERICAS])
+
+vif_data = pd.DataFrame()
+vif_data["predictor"] = X.columns
+vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+
+# No se requiere la variable artificial "const" como predictor
+vif_data.iloc[1:]
