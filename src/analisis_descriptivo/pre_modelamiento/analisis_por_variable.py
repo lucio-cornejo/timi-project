@@ -46,3 +46,45 @@ for var_cat in VARS_CATEGORICAS:
   )
   plt.xticks(rotation = 45)
   plt.show()
+
+# %%
+"""
+Histograma y densidad aproximada de cada variable numérica
+"""
+for var_num in VARS_NUMERICAS:
+  sns.histplot(
+    datos[var_num], 
+    # También estimar la densidad de la variable numérica
+    kde = True
+  )
+  plt.ylabel('Frecuencia')
+  plt.show()
+
+# %%
+"""
+Comparamos la homogeneidad de las variables numéricas
+"""
+(datos[VARS_NUMERICAS]
+  .describe().T
+  # Calcular el coeficiente de variación (C.V) de cada variable numérica
+  .assign(coef_variacion = lambda d: d['std'] / d['mean'])
+  # Ordenar las variables numéricas de menor a mayor C.V,
+  # es decir, de mayor homogeneidad a menor .
+  .sort_values('coef_variacion', ascending = True)
+  .loc[:, [
+    'coef_variacion', 'mean', 'std',
+    'min', '25%', '50%', '75%', 'max'
+  ]]
+)
+
+# %%
+"""
+En la tabla resultante, solo la variable numérica "education-num"
+posee C.V menor o igual que 30%. 
+Así, solo aquella variable numérica es homogénea, es decir,
+su promedio es representativo de dicha variable.
+
+Por otro lado, el resto de variables numéricas poseen un C.V mayor
+que 30%, así que el promedio de cada una no la representa adecuadamente,
+por lo que consistirían de variables heterogéneas (no homogéneas).
+"""
