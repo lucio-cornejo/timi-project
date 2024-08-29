@@ -7,7 +7,8 @@ from src.pre_procesamiento.transformar_datos_para_modelos import (
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, cohen_kappa_score
+
 
 # %%
 datos_train, datos_test = filtrar_datos_train_test_para_modelos()
@@ -15,11 +16,12 @@ datos = pd.concat([datos_train, datos_test], ignore_index = True)
 datos
 
 # %%
-# Transformar las variables categóricas via one-hot encoding,
-# pero descartando cada columna extra creada .
+# Transformar las variables categóricas via variables dummy/binarias
 datos_encoded = pd.get_dummies(
   datos, 
   columns = VARS_CATEGORICAS,
+  # Descartamos una columna del total de columnas creadas por variable
+  # categórica, para intentar evitar multicolinearidad entre los predictores
   drop_first = True,
   dtype = 'int64'
 )
@@ -60,8 +62,15 @@ print(f'Exactitud del modelo tras estandarización vía Z-score: {round(100 * mo
 print('\nCantidades en la variable por predecir:')
 print(y_test.value_counts())
 
+# Predicciones del modelo
+y_pred = modelo.predict(X_test_std)
+
 # Matríz de confusión
-confusion_matrix(y_test, modelo.predict(X_test_std), labels = [1, 0])
+confusion_matrix(y_test, y_pred, labels = [1, 0])
+
+# %%
+# Coeficiente de Kappa de Cohen
+cohen_kappa_score(y_test, y_pred)
 
 # %%
 """

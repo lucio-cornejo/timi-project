@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 from matplotlib import pyplot as plt
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, cohen_kappa_score
 
 # %%
 datos_train, datos_test = filtrar_datos_train_test_para_modelos()
@@ -54,8 +54,15 @@ print(f'Exactitud del modelo: {round(100 * modelo.score(X_test, y_test), 2)}%')
 print('\nCantidades en la variable por predecir:')
 print(y_test.value_counts())
 
+# Predicciones del modelo
+y_pred = modelo.predict(X_test)
+
 # Matríz de confusión
-confusion_matrix(y_test, modelo.predict(X_test), labels = [1, 0])
+confusion_matrix(y_test, y_pred, labels = [1, 0])
+
+# %%
+# Coeficiente de Kappa de Cohen
+cohen_kappa_score(y_test, y_pred)
 
 # %%
 """

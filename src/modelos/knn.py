@@ -10,8 +10,7 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import confusion_matrix
-
+from sklearn.metrics import confusion_matrix, cohen_kappa_score
 
 # %%
 datos_train, datos_test = filtrar_datos_train_test_para_modelos()
@@ -91,5 +90,21 @@ print(f'Exactitud del modelo: {round(100 * modelo.score(X_test, y_test), 2)}%')
 print('\nCantidades en la variable por predecir:')
 print(y_test.value_counts())
 
+# Predicciones del modelo
+y_pred = modelo.predict(X_test)
+
 # Matríz de confusión
-confusion_matrix(y_test, modelo.predict(X_test), labels = [1, 0])
+confusion_matrix(y_test, y_pred, labels = [1, 0])
+
+# %%
+# Coeficiente de Kappa de Cohen
+cohen_kappa_score(y_test, y_pred)
+
+# %%
+from sklearn.inspection import permutation_importance
+
+result = permutation_importance(modelo, X_test, y_test, n_repeats=10, random_state=42)
+importance = result.importances_mean
+
+for i in range(len(importance)):
+  print(f"Feature {i+1}: {importance[i]}")
