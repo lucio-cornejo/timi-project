@@ -1,5 +1,53 @@
 # Proyecto Timi
 
+## Recomendaciones del informe
+
+- En vez de usar la exactitud, para comparar modelos, emplear una métrica
+que considere el caso en que las clases de la variable por predecir están
+desbalanceadas. Una métrica que puede servir ese fin es el coeficiente de Kappa de Cohen.
+
+Explicación:
+
+Considera un modelo de detección de fraude en el que sólo el 1% de las transacciones sean fraudulentas (clase minoritaria). Un modelo que siempre predice "no fraude" (la clase mayoritaria) tendría una precisión del 99% pero fallaría por completo en la detección del fraude, lo que haría que el modelo fuera ineficaz para el propósito previsto.
+
+
+- Comparar sus hipótesis con lo descubierto vía los modelos.
+
+- Página 15
+    - Quitar secciones 
+      `Relación entre edad y horas trabajadas`,
+      `Correlación entre educación y ganancias de capital`,
+      `Relación entre peso final de la muestra (fnlwgt) y otras variables`,
+      `Horas trabajadas por semana y ganancias de capital`,
+      pues la correlación es muy pequeña como para poder inferir algo.
+
+    - Mencionar las colas significativas, sth like:
+      Las variables fnlwgt, capital-gain y capital-loss presentan
+      distribuciones con colas muy significativas. Esto sugiere
+      que podría ser necesario transformar tales variables,
+      por ejemplo calculando logaritmo, antes de emplearlas en los modelos.
+
+- Página 17
+    - `Distribución general`
+        - Pusieron que education-num es más disperso para `<=50k`,
+        pero es para `>50K`, pues el rango intercuartílico es mayor.
+    - `Mediana y Rango Intercuartílico (IQR)`
+        - Mencionarles que el rango intercuartilico es un numero,
+        no un intervalo/rango.
+    - `Conclusiones`
+        - Mencionarles tener cuidado de usar el término `correlación`
+        cuando no nos referimos a una relación lineal.
+
+- Página 19
+    - Mencionan que se hizo retención de sólo de las variables más relevantes
+    para el modelo; pero, en el código no se llegó a implementar aquello.
+
+- Página 20
+    - 
+
+
+## General
+
 - Las matrices de confusión se han creado siguiendo el siguiente
 orden entre filas y columnas: 
 
