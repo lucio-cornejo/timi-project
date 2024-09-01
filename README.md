@@ -1,5 +1,10 @@
 # Proyecto Timi
 
+## Notebooks
+
+1. `src/notebooks/pre_procesamiento.ipynb`
+1. `src/notebooks/analisis_descriptivo.ipynb`
+
 ## Recomendaciones del informe
 
 - En vez de usar la exactitud, para comparar modelos, emplear una métrica
