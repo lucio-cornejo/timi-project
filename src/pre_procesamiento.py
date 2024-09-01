@@ -24,10 +24,11 @@ PREDICTORES_NUMERICOS = [
   "capital gains",
   "capital losses",
   "dividends from stocks",
-  "instance weight",
   "num persons worked for employer",
   "weeks worked in year"
 ]
+
+VARIABLES_NUMERICAS = [*PREDICTORES_NUMERICOS, "instance weight"]
 
 PREDICTORES_CATEGORICOS = [
   "class of worker",
@@ -68,7 +69,7 @@ PREDICTORES_CATEGORICOS = [
 VARIABLES_CATEGORICAS = [COLUMNA_OBJETIVO, *PREDICTORES_CATEGORICOS]
 
 # %%
-datos[[COLUMNA_ID, *PREDICTORES_NUMERICOS, *VARIABLES_CATEGORICAS]].dtypes
+datos[[COLUMNA_ID, *VARIABLES_NUMERICAS, *VARIABLES_CATEGORICAS]].dtypes
 
 # %% [markdown]
 # Note en tabla previa que algunas variables categóricas, por ejemplo
@@ -79,7 +80,7 @@ datos[[COLUMNA_ID, *PREDICTORES_NUMERICOS, *VARIABLES_CATEGORICAS]].dtypes
 # los tipos de dato correctos a cada variable relevante.
 
 # %%
-for var_numerica in PREDICTORES_NUMERICOS:
+for var_numerica in VARIABLES_NUMERICAS:
   datos[var_numerica] = pd.to_numeric(datos[var_numerica], errors = 'coerce')
 
 for var_categorica in VARIABLES_CATEGORICAS:
@@ -87,7 +88,7 @@ for var_categorica in VARIABLES_CATEGORICAS:
 
 # %%
 # Verificamos que los tipos de variable ahora son correctos
-datos[[COLUMNA_ID, *PREDICTORES_NUMERICOS, *VARIABLES_CATEGORICAS]].dtypes
+datos[[COLUMNA_ID, *VARIABLES_NUMERICAS, *VARIABLES_CATEGORICAS]].dtypes
 
 # %% [markdown]
 # ## Observaciones/filas duplicadas
@@ -118,17 +119,17 @@ datos[datos.duplicated()].shape[0]
 # ## Valores vacíos/perdidos
 
 # %%
-# Cantidad de valores perdidos en cada predictor numérico
-for predictor_num in PREDICTORES_NUMERICOS:
+# Cantidad de valores perdidos en cada variable numérica
+for var_num in VARIABLES_NUMERICAS:
   print(
-    predictor_num, 
+    var_num, 
     ':\t',
-    datos[predictor_num].isna().sum(),
+    datos[var_num].isna().sum(),
     sep = ''
   )
 
 # %% [markdown]
-# **Conclusión**: No existen valores perdidos en ninguno de los predictores numéricos.
+# **Conclusión**: No existen valores perdidos en ninguna de las variables numéricas.
 
 # %% [markdown]
 # Note que no debería ser necesario revisar la existencia de valores

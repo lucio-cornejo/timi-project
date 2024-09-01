@@ -1,6 +1,8 @@
 COLUMNA_ID = 'key'
 
+
 COLUMNA_OBJETIVO = "taxable income amount"
+
 
 PREDICTORES_NUMERICOS = [
   "age",
@@ -8,10 +10,13 @@ PREDICTORES_NUMERICOS = [
   "capital gains",
   "capital losses",
   "dividends from stocks",
-  "instance weight",
   "num persons worked for employer",
   "weeks worked in year"
 ]
+
+
+VARIABLES_NUMERICAS = [*PREDICTORES_NUMERICOS, "instance weight"]
+
 
 PREDICTORES_CATEGORICOS = [
   "class of worker",
