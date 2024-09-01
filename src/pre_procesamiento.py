@@ -2,17 +2,92 @@
 # # Pre procesamiento de datos
 
 # %%
-from src.utils import (
-  COLUMNA_ID,
-  PREDICTORES_NUMERICOS,
-  VARIABLES_CATEGORICAS
-)
-
 import pandas as pd
+
+pd.set_option('display.max_columns', None)
 
 # %%
 datos = pd.read_csv('census_income/census-income.csv')
-datos
+datos.head(20)
+
+# %% [markdown]
+# ## Tipos de variables
+
+# %%
+COLUMNA_ID = 'key'
+
+COLUMNA_OBJETIVO = "taxable income amount"
+
+PREDICTORES_NUMERICOS = [
+  "age",
+  "wage per hour",
+  "capital gains",
+  "capital losses",
+  "dividends from stocks",
+  "instance weight",
+  "num persons worked for employer",
+  "weeks worked in year"
+]
+
+PREDICTORES_CATEGORICOS = [
+  "class of worker",
+  "detailed industry code",
+  "detailed occupation code",
+  "education",
+  "enroll in edu inst last wk",
+  "marital stat",
+  "major industry code",
+  "major occupation code",
+  "race",
+  "hispanic origin",
+  "sex",
+  "member of a labor union",
+  "reason for unemployment",
+  "full or part time employment stat",
+  "tax filer stat",
+  "region of previous residence",
+  "state of previous residence",
+  "detailed household and family stat",
+  "detailed household summary in household",
+  "migration code-change in msa",
+  "migration code-change in reg",
+  "migration code-move within reg",
+  "live in this house 1 year ago",
+  "migration prev res in sunbelt",
+  "family members under 18",
+  "country of birth father",
+  "country of birth mother",
+  "country of birth self",
+  "citizenship",
+  "own business or self employed code",
+  "fill inc questionnaire for veteran's admin",
+  "veterans benefits code",
+  "year"
+]
+
+VARIABLES_CATEGORICAS = [COLUMNA_OBJETIVO, *PREDICTORES_CATEGORICOS]
+
+# %%
+datos[[COLUMNA_ID, *PREDICTORES_NUMERICOS, *VARIABLES_CATEGORICAS]].dtypes
+
+# %% [markdown]
+# Note en tabla previa que algunas variables categóricas, por ejemplo
+# "own business or self employed code" y "veterans benefits code",
+# figuran de tipo entero.
+# 
+# Antes de continuar la inspección de los datos descargados, asignemos
+# los tipos de dato correctos a cada variable relevante.
+
+# %%
+for var_numerica in PREDICTORES_NUMERICOS:
+  datos[var_numerica] = pd.to_numeric(datos[var_numerica], errors = 'coerce')
+
+for var_categorica in VARIABLES_CATEGORICAS:
+  datos[var_categorica] = pd.Categorical(datos[var_categorica])
+
+# %%
+# Verificamos que los tipos de variable ahora son correctos
+datos[[COLUMNA_ID, *PREDICTORES_NUMERICOS, *VARIABLES_CATEGORICAS]].dtypes
 
 # %% [markdown]
 # ## Observaciones/filas duplicadas
@@ -48,7 +123,7 @@ for predictor_num in PREDICTORES_NUMERICOS:
   print(
     predictor_num, 
     ':\t',
-    pd.to_numeric(datos[predictor_num], errors = 'coerce').isna().sum(),
+    datos[predictor_num].isna().sum(),
     sep = ''
   )
 

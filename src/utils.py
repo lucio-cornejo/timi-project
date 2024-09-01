@@ -1,18 +1,19 @@
 COLUMNA_ID = 'key'
 
+COLUMNA_OBJETIVO = "taxable income amount"
 
 PREDICTORES_NUMERICOS = [
   "age",
+  "wage per hour",
   "capital gains",
   "capital losses",
   "dividends from stocks",
+  "instance weight",
   "num persons worked for employer",
-  "wage per hour",
   "weeks worked in year"
 ]
 
-
-VARIABLES_CATEGORICAS = [
+PREDICTORES_CATEGORICOS = [
   "class of worker",
   "detailed industry code",
   "detailed occupation code",
@@ -32,7 +33,6 @@ VARIABLES_CATEGORICAS = [
   "state of previous residence",
   "detailed household and family stat",
   "detailed household summary in household",
-  "instance weight",
   "migration code-change in msa",
   "migration code-change in reg",
   "migration code-move within reg",
@@ -46,6 +46,7 @@ VARIABLES_CATEGORICAS = [
   "own business or self employed code",
   "fill inc questionnaire for veteran's admin",
   "veterans benefits code",
-  "year",
-  "taxable income amount"
+  "year"
 ]
+
+VARIABLES_CATEGORICAS = [COLUMNA_OBJETIVO, *PREDICTORES_CATEGORICOS]
