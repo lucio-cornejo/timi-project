@@ -83,12 +83,7 @@ no solo el especificado en el ZIP .
 
 ## Base de datos
 
-- Los nombres de las columnas están especificadas en `census+income/old.adult.names` .
-
-- Filas/observaciones: 
-  - Entrenamiento: `census+income/adult.data`
-  - Test: `census+income/adult.test`
-
+Archivo `census_income/census-income.csv`.
 
 ## Reproducibilidad
 
