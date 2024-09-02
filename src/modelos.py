@@ -8,6 +8,7 @@ from src.utils import (
   PREDICTORES_CATEGORICOS
 )
 
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -191,18 +192,42 @@ importancia_predictores_reg = pd.DataFrame({
 })
 importancia_predictores_reg = (importancia_predictores_reg
   .assign(abs_coef = lambda d: d['Coeficiente'].abs())
+  .assign(Odds_ratio = lambda d: np.exp(d['Coeficiente']))
   .sort_values(by = 'abs_coef', ascending = False)
-  .loc[:, ['Predictor', 'Coeficiente']]
+  .loc[:, ['Predictor', 'Coeficiente', 'Odds_ratio']]
 )
 
+# Predictores, ordenados de mayor a menor importancia en la predicción
+# Solo mostrar los 20 predictores más importantes
 importancia_predictores_reg.head(20)
 
 # %% [markdown]
 # **Interpretación**: 
-"""
-NO OLVIDAR QUE LOS BETA_I SE INTERPRETAN EN BASE Al CAMBIO DEL 
-PREDICTOR X_I EN DESVIACION_ESTANDAR(X_I), NO CAMBIO EN 1 NOMÁS.
-"""
+# 
+# Los cinco predictores más importantes según este modelo son
+# "weeks worked in year", "tax filer stat_ Nonfiler", "age", 
+# "education_ Bachelors" y "sex_ Male".
+# 
+# Para la variable "weeks worked in year", se cumple que si
+# aumenta en 1 * desviación_estándar("weeks worked in year),
+# las chances que una persona deba pagar impuestos se multiplican
+# por 2.524585 .
+# 
+# Sabemos que valores de odds_ratio mayores que 1
+# indican que, cuando el predictor respectivo aumenta, 
+# la probabilidad de tener que pagar impuestos se incrementa.
+# 
+# Por otro lado, valores de odds_ratio menores que 1
+# indican que, cuando el predictor respectivo aumenta, 
+# la probabilidad de tener que pagar impuestos se disminuye.
+# 
+# En ese sentido, como el odds_ratio de la variable binaria (1, 0)
+# "tax filer stat_ Nonfiler" es menor que 1, esto implica que
+# para aquellas personas cuyo valor de "tax filer stat" es "Nonfiler",
+# la propabilidad de tener que pagar impuestos disminuye.
+# Este comportamiento coincide con lo observado en el análisis descriptivo,
+# donde se visualiza la distribución condicional de "tax filer stat",
+# respecto a las clases de la variable objetivo.
 
 # %% [markdown]
 # ### Bosque aleatorio
@@ -263,12 +288,28 @@ plt.title("Importancia de los predictores en el modelo")
 plt.show()
 
 # %% [markdown]
+# **Interpretación**: 
+# 
+# Los cinco predictores más importantes según este modelo son
+# "age", "dividends from stocks", "capital gains", 
+# "num  persons worked for employer" y "weeks worked in year".
+# 
+# Sabemos que la importancia de los predictores se calcula en
+# base al **decrecimiento en impureza** que el predictor produce
+# en los árboles de decisión del bosque.
+# 
+# Predictores con valor de importancia muy cercano
+# a cero indica que no son relevantes en las predicciones.
+# 
+# Así, un mayor valor de importancia de un predictor indica que
+# aquella variable influye más en la predicción final.
+
+# %% [markdown]
 # ### XGBoost
 
 # %%
 import re
 import xgboost as xgb
-import numpy as np
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import GridSearchCV, KFold
 
@@ -361,6 +402,22 @@ ax.barh(
 )
 plt.title("Importancia de los predictores en el modelo")
 plt.show()
+
+# %% [markdown]
+# **Interpretación**: 
+# 
+# Los cinco predictores más importantes según este modelo son
+# "tax filer stat_ Nonfiler", "weeks worked in year", "sex_ Male",
+# "major occupation code_ Professional speciality" y 
+# "major occupation code_ Other service".
+# 
+# La importancia de los predictores se calcula diferente al modelo
+# bosque aleatorio. Para el modelo XGBoost, los predictores con mayor
+# importancia son aquellos que más **incrementan la exactitud** del modelo
+# cuando se emplea en los árboles de decisión que componen el modelo.
+
+# Aún así, un mayor valor de importancia de un predictor indica que
+# aquella variable influye más en la predicción final.
 
 # %% [markdown]
 # ## Guardamos los modelos
