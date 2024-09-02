@@ -10,7 +10,7 @@ from src.utils import (
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix, cohen_kappa_score
 from sklearn.metrics import roc_curve, roc_auc_score
 import matplotlib.pyplot as plt
@@ -21,7 +21,6 @@ datos = (pd
   # Excluir las columnas 'key' e 'instance weight'
   [[*PREDICTORES_NUMERICOS, *PREDICTORES_CATEGORICOS, COLUMNA_OBJETIVO]]
 )
-# ).iloc[0:1000]
 
 # Corregir los tipos de variables
 for pred_num in PREDICTORES_NUMERICOS:
@@ -71,7 +70,7 @@ def graficar_curva_roc_con_auc(
   y_pred_prob = modelo.predict_proba(predictores_test)[:, 1]
 
   # Calcular curva ROC y su AUC
-  fpr, tpr, thresholds = roc_curve(target_test, y_pred_prob)
+  fpr, tpr, _ = roc_curve(target_test, y_pred_prob)
   auc_score = roc_auc_score(target_test, y_pred_prob)
 
   plt.figure(figsize = (8, 6))
@@ -119,7 +118,7 @@ def optimizar_punto_de_corte_segun_criterio_de_youden(
 # en cada modelo
 RANDOM_STATE_REG = 42
 RANDOM_STATE_BOSQUE = 420
-RANDOM_STATE_MODELO_3 = 6174
+RANDOM_STATE_XGB = 6174
 
 X = pd.get_dummies(
   datos.drop(columns = [COLUMNA_OBJETIVO]),
@@ -155,7 +154,6 @@ modelo_reg.fit(X_train_std, y_train_reg)
 # %%
 # Predicciones del modelo, con punto de corte c = 0.5
 y_pred_reg = modelo_reg.predict(X_test_std)
-
 mostrar_metricas_relevantes_del_modelo(y_test_reg, y_pred_reg)
 
 # %%
@@ -183,18 +181,18 @@ mostrar_metricas_relevantes_del_modelo(y_test_reg, y_pred_opt_reg)
 # ### Importancia de los predictores
 
 # %%
-importance_df_scaled = pd.DataFrame({
+importancia_predictores_reg = pd.DataFrame({
   'Predictor': X.columns,
   # Coeficientes estandarizados
   'Coeficiente': modelo_reg.coef_[0]
 })
-importance_df_scaled = (importance_df_scaled
+importancia_predictores_reg = (importancia_predictores_reg
   .assign(abs_coef = lambda d: d['Coeficiente'].abs())
   .sort_values(by = 'abs_coef', ascending = False)
   .loc[:, ['Predictor', 'Coeficiente']]
 )
 
-importance_df_scaled.head(20)
+importancia_predictores_reg.head(20)
 
 # %% [markdown]
 # **Interpretación**: 
@@ -219,7 +217,6 @@ modelo_bosque.fit(X_train_bosque, y_train_bosque)
 
 # %%
 y_pred_bosque = modelo_bosque.predict(X_test_bosque)
-
 mostrar_metricas_relevantes_del_modelo(y_test_bosque, y_pred_bosque)
 
 # %%
@@ -245,7 +242,7 @@ mostrar_metricas_relevantes_del_modelo(y_test_bosque, y_pred_opt_bosque)
 # ### Importancia de los predictores
 
 # %%
-importancia_predictores = (pd.DataFrame({
+importancia_predictores_bosque = (pd.DataFrame({
   'Predictor' : X.columns,
   'Importancia': modelo_bosque.feature_importances_
 })
@@ -256,8 +253,105 @@ importancia_predictores = (pd.DataFrame({
 
 fig, ax = plt.subplots(figsize = (6, 10))
 ax.barh(
-  importancia_predictores['Predictor'].values,
-  importancia_predictores['Importancia'].values
+  importancia_predictores_bosque['Predictor'].values,
+  importancia_predictores_bosque['Importancia'].values
+)
+plt.title("Importancia de los predictores en el modelo")
+plt.show()
+
+# %% [markdown]
+# ## XGBoost
+
+# %%
+import re
+import xgboost as xgb
+import numpy as np
+from sklearn.metrics import make_scorer
+from sklearn.model_selection import GridSearchCV, KFold
+
+X_xgb = X.copy()
+
+# Remover los caracteres en los nombres de las columnas que generan
+# error al entrenar el modelo
+# Fuente: https://stackoverflow.com/a/50633571
+regex = re.compile(r"\[|\]|<", re.IGNORECASE)
+X_xgb.columns = [regex.sub("_", col) if any(x in str(col) for x in set(('[', ']', '<'))) else col for col in X_xgb.columns.values]
+
+X_train_xgb, X_test_xgb, y_train_xgb, y_test_xgb = train_test_split(
+  X_xgb, y, test_size = 0.2, random_state = RANDOM_STATE_XGB
+)
+
+# %%
+param_grid = { 'alpha': [0.01, 0.1, 1, 10] }
+
+cv = KFold(n_splits = 5, shuffle = True, random_state = RANDOM_STATE_XGB)
+
+proporcion_negativos_positivos = (y.shape[0] - y.sum()) / y.sum()
+
+modelo_cv_xgb = xgb.XGBClassifier(
+  # Calculamos la raíz cuadra de la proporción de negativos
+  # y positivos, pues la cantidad de casos positivos es tan pequeña
+  scale_pos_weight = np.sqrt(proporcion_negativos_positivos),
+  use_label_encoder = False,
+  random_state = RANDOM_STATE_XGB
+)
+
+kappa_scorer = make_scorer(cohen_kappa_score)
+
+grid_search = GridSearchCV(
+  estimator = modelo_cv_xgb, 
+  param_grid = param_grid, 
+  cv = cv, 
+  scoring = kappa_scorer, 
+  n_jobs = -1,
+  verbose = 1
+)
+grid_search.fit(X_train_xgb, y_train_xgb)
+
+# %%
+mejor_xgb = grid_search.best_estimator_
+mejor_xgb.fit(X_train_xgb, y_train_xgb)
+
+# %%
+y_pred_xgb = mejor_xgb.predict(X_test_xgb)
+mostrar_metricas_relevantes_del_modelo(y_test_xgb, y_pred_xgb)
+
+# %%
+graficar_curva_roc_con_auc(
+  nombre_modelo = 'XGB',
+  modelo = mejor_xgb,
+  predictores_test = X_test_xgb,
+  target_test = y_test_xgb
+)
+
+# %%
+punto_de_corte_optimo_xgb = optimizar_punto_de_corte_segun_criterio_de_youden(
+  mejor_xgb, X_test_xgb, y_test_xgb
+)
+print(f'Punto de corte óptimo: {punto_de_corte_optimo_xgb}')
+
+y_pred_prob_xgb = mejor_xgb.predict_proba(X_test_xgb)[:, 1]
+y_pred_opt_xgb = (y_pred_prob_xgb >= punto_de_corte_optimo_xgb) + 0
+
+mostrar_metricas_relevantes_del_modelo(y_test_xgb, y_pred_opt_xgb)
+
+# %%
+importancia_predictores_xgb = (pd.DataFrame({
+  # No es necesario extraer las columns de X_xgb, pues tienen
+  # el mismo orden que en X. Emplearemos las columnas de X 
+  # por consistencia con los modelos previos.
+  'Predictor' : X.columns,
+  'Importancia': mejor_xgb.feature_importances_
+})
+  .sort_values('Importancia', ascending = True)
+  # Seleccionar solo los 20 predictores más importantes
+  .tail(20)
+)
+
+fig, ax = plt.subplots(figsize = (6, 10))
+ax.barh(
+  importancia_predictores_xgb['Predictor'].values,
+  importancia_predictores_xgb['Importancia'].values
 )
 plt.title("Importancia de los predictores en el modelo")
 plt.show()
