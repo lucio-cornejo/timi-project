@@ -4,9 +4,9 @@
 # %%
 from src.utils import (
   COLUMNA_OBJETIVO,
-  PREDICTORES_NUMERICOS,
-  PREDICTORES_CATEGORICOS,
-  VARIABLES_CATEGORICAS
+  VARIABLES_NUMERICAS,
+  VARIABLES_CATEGORICAS,
+  PREDICTORES_CATEGORICOS
 )
 
 import pandas as pd
@@ -16,13 +16,12 @@ import matplotlib.pyplot as plt
 # %%
 datos = (pd
   .read_csv('census_income/census-income.csv')
-  # Descartar la columna de identificador de filas (primary key),
-  # para solo analizar los predictors y la variable objectivo
-  [[*PREDICTORES_NUMERICOS, *PREDICTORES_CATEGORICOS, COLUMNA_OBJETIVO]]
+  # Descartar la columna de identificador de filas (primary key)
+  [[*VARIABLES_NUMERICAS, *PREDICTORES_CATEGORICOS, COLUMNA_OBJETIVO]]
 )
 
 # Corregir los tipos de variables
-for var_numerica in PREDICTORES_NUMERICOS:
+for var_numerica in VARIABLES_NUMERICAS:
   datos[var_numerica] = pd.to_numeric(datos[var_numerica], errors = 'coerce')
 
 for var_categorica in VARIABLES_CATEGORICAS:
@@ -70,6 +69,10 @@ LOS DATOS PARA SU USO EN LOS MODELOS, SE EMPLEA LABEL ENCODING O ONE HOT ENCODIN
 CONSIDERAR CÓMO LA CLASE 'NOT IN UNIVERSE' AFECTA A ESE ORDENAMIENTO CATEGÓRICO
 """
 
+# %% [markdown]
+# A partir de l
+
+
 # %%
 # Porcentajes en la variable objetivo, variable categórica nominal
 porcentajes_var_cat = (datos
@@ -114,11 +117,11 @@ plt.show()
 # ### Variables numéricas
 
 # %%
-# Número de predictores numéricos
-len(PREDICTORES_NUMERICOS)
+# Número de variables numéricas
+len(VARIABLES_NUMERICAS)
 
 # %%
-for var_num in PREDICTORES_NUMERICOS:
+for var_num in VARIABLES_NUMERICAS:
   fig = plt.figure(constrained_layout = True, figsize = (8, 6))
   spec = fig.add_gridspec(2, 1, height_ratios = [3, 1])
 
@@ -142,13 +145,13 @@ for var_num in PREDICTORES_NUMERICOS:
   plt.show()
 
 # %% [markdown]
-# De los gráficos notamos que ningún predictor numérico presenta
+# De los gráficos notamos que ninguna variable numérica presenta
 # una distribución aproximadamente normal/gaussiana.
 # 
 # Asimismo, las variables "wage per hour", "capital gains",
 # "capital losses" y "dividens from stocks", no solo presentan
 # una gran cantidad de valores atípicos, sino que su rango
-# intercuatílico es de cero. Esto significa que, para cada una de
+# intercuatílico es cero. Esto significa que, para cada una de
 # aquellas variables en particular, el 50% de sus observaciones
 # consisten del mismo valor.
 # 
@@ -156,7 +159,10 @@ for var_num in PREDICTORES_NUMERICOS:
 # variable "instance weight", pero, la forma de su distribución 
 # y su cola significativa sugiere que podría resultar apropiada 
 # una transformación del tipo log(1 + "instance weight"), con el fin
-# de normalizar aquella variable.
+# de normalizar aquella variable. Esto en caso fuese a emplearse
+# tal variable para el entrenamiento de los modelos, mas, en el 
+# archivo `census_income/census-income_doc.txt` se sugiere que no
+# se utilice aquella variable para los modelos de clasificación.
 
 # Por otro lado, se observa una mayor dispersión de los datos
 # para las variables "age", "num persons worked for employer" y
@@ -165,8 +171,8 @@ for var_num in PREDICTORES_NUMERICOS:
 # diagramas de caja no presentan puntos fuera del rango cubierto por los whiskers.
 
 # %%
-# Comparamos la homogeneidad de los predictores numéricos
-(datos[PREDICTORES_NUMERICOS]
+# Comparamos la homogeneidad de los variables numéricas
+(datos[VARIABLES_NUMERICAS]
   .describe().T
   # Calcular el coeficiente de variación (C.V) de cada variable numérica
   .assign(coef_variacion = lambda d: d['std'] / d['mean'])
@@ -180,10 +186,51 @@ for var_num in PREDICTORES_NUMERICOS:
 )
 
 # %% [markdown]
-# En la tabla resultante, ningún predictor numérico posee C.V menor o igual que 0.3 (30%).
-# Esto significa que, para cada predictor numérico, su promedio no representa a la variable
+# En la tabla resultante, ninguna varable numérica posee C.V menor o igual que 0.3 (30%).
+# Esto significa que, para cada variable numérica, su promedio no representa a la variable
 # adecuadamente, por lo que consisten de variables heterogéneas (no homogéneas).
 # 
 # Esta información sería de mayor utilidad en caso se hubiese requerido imputar valores perdidos
-# en los predictores numéricos, pues, hemos confirmado que una imputación vía la media aritmética
+# en las variables numéricas, pues, hemos confirmado que una imputación vía la media aritmética
 # muy probablemente no hubiese sido adecuada. Así, otro tipo de imputación se hubiese requerido.
+
+# %% [markdown]
+# ## Análisis entre variables
+
+# %% [markdown]
+# ### Comparación entre predictores categóricos y variable objetivo
+
+# %%
+for pred_cat in PREDICTORES_CATEGORICOS:
+  frecuencias = datos.groupby([COLUMNA_OBJETIVO, pred_cat]).size().reset_index(name = 'Cantidad')
+
+  # Frecuencias de la variable objetivo en cada clase del predictor categórico
+  plt.figure(figsize = (12, 6))
+  sns.barplot(x = COLUMNA_OBJETIVO, y = 'Cantidad', hue = pred_cat, data = frecuencias)
+  plt.title(f'Frecuencias de variable objectivo, por {pred_cat}')
+  plt.xticks(rotation = 45)
+  plt.show()
+
+  # Frecuencias de las clases del predictor categórico, en cada clase de la variable objetivo
+  plt.figure(figsize = (12, 6))
+  sns.barplot(x = pred_cat, y = 'Cantidad', hue = COLUMNA_OBJETIVO, data = frecuencias)
+  plt.title(f'Frecuencias de {pred_cat}, por {COLUMNA_OBJETIVO}')
+  plt.xticks(rotation = 45)
+  plt.show()
+
+# %% [markdown]
+# ### Comparación entre variables numéricas y variable objetivo
+
+# %%
+for var_num in VARIABLES_NUMERICAS:
+  plt.figure(figsize = (12, 6))
+  sns.violinplot(x = COLUMNA_OBJETIVO, y = var_num, data = datos, inner = None)
+  sns.boxplot(
+    x = COLUMNA_OBJETIVO, 
+    y = var_num, 
+    data = datos, 
+    width = 0.25,
+    fill = False
+  )
+  plt.title(f'Distribución de "{var_num}", según valor de la variable objetivo')
+  plt.show()
