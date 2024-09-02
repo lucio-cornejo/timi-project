@@ -6,7 +6,8 @@ from src.utils import (
   COLUMNA_OBJETIVO,
   VARIABLES_NUMERICAS,
   VARIABLES_CATEGORICAS,
-  PREDICTORES_CATEGORICOS
+  PREDICTORES_CATEGORICOS,
+  PREDICTORES_NUMERICOS
 )
 
 import pandas as pd
@@ -62,18 +63,34 @@ for var_cat in PREDICTORES_CATEGORICOS:
   plt.xticks(rotation = 45)
   plt.show()
 
-# %%
-"""
-PENDIENTE RECONOCER QUÉ PREDICTORES CATEGORICOS PUEDEN CONSIDERARSE
-DE TIPO ORDINAL Y CUALES NO. ESTO PARA TENER EN CLARO SI AL TRANSFORMAR
-LOS DATOS PARA SU USO EN LOS MODELOS, SE EMPLEA LABEL ENCODING O ONE HOT ENCODING
-
-CONSIDERAR CÓMO LA CLASE 'NOT IN UNIVERSE' AFECTA A ESE ORDENAMIENTO CATEGÓRICO
-"""
-
 # %% [markdown]
-# A partir de l
-
+# En base a los valores en cada variable categórica, se observa que
+# solo la variable "education" podría considerarse de tipo ordinal;
+# el resto de variables categóricas son nominales.
+# Esto implica que, al momento de transformar los datos para que pueden
+# emplearse en el entrenamiento de modelos, no sería correcto aplicar
+# "label encoding" a las variables categóricas, pues no es el caso que
+# exista un orden claramente establecido entre las clases de cada
+# variable categórica.
+# 
+# Incluso para la variable "education", aquel orden entre clases no
+# está claramente definido. Note que no es trivial cómo ordenar su 
+# clase "Children" con respecto a las otras.
+# 
+# De manera similar, aquellas variables que presentan "Not in universe"
+# como una de sus clases, se tratan de variables nominales. Esto pues,
+# por definición, la clase "Not in universe" no es comparable con el 
+# resto de clases en la variable categórica que lo incluye como clase.
+# 
+# Por otro lado, todos los predictores categóricos, salvo por 
+# "education", "marital stat", "tax filer stat", "detailed household and family stat"
+# y "detailed household summary in household" presentan una clase con
+# que representa aproximadamente al menos el 50% de las observaciones.
+# 
+# Además, la distribución de las variables 
+# "migration code-change in reg" y "migration code-move within reg"
+# parecen ser casi idénticas (en porcentajes), salvo en los nombres
+# de las clases de cada variables.
 
 # %%
 # Porcentajes en la variable objetivo, variable categórica nominal
@@ -95,7 +112,6 @@ sns.barplot(
 for index, value in enumerate(porcentajes_var_cat["Porcentaje"]):
   plt.text(index, value + 1, f'{round(value, 2)}%', ha = 'center')
 
-plt.xticks(rotation = 45)
 plt.show()
 
 # %% [markdown]
@@ -201,6 +217,33 @@ for var_num in VARIABLES_NUMERICAS:
 
 # %% [markdown]
 # ### Comparación entre predictores categóricos y variable objetivo
+# 
+# Escenario A:
+# 
+# Cuando comparamos la frecuencia de un predictor categórico, en base
+# a las clases de la variables objetivo binaria, es de nuestro interés
+# cuándo las **distribuciones condicionales son significativamente diferentes**.
+# Esto debido a que, de existir aquella diferencia significativa, se
+# tendría indicios de cómo diferenciar a las personas que deben pagar
+# impuestos, con los que no deben pagarlos; aquella comparación en
+# base al predictor categórico en cuestión.
+# 
+# Escenario B.1:
+# 
+# Por otro lado, al comparar las frecuencias de la variable objetivo,
+# en cada clase de algún predictor categórico, se espera que los 
+# predictores que influencien de manera significativa la predicción
+# sobre el pago de impuestos, presenten para alguna de sus clases una
+# distribución condicional de 1 (debe pagar impuesto) y 0 # (no debe pagar impuesto) 
+# significativamente diferente a la distribución
+# marginal de la variable objetivo. 
+# 
+# Escenario B.2:
+# 
+# Idealmente, se espera exista algún predictor categórico para el cual
+# una de sus ditribuciones condicionales tenga como porcentaje, de casos
+# que deben pagar impuesto, un valor muy elevado comparado con 6%,
+# el porcentaje poblacional (aproximado) de las personas que deben pagar impuestos.
 
 # %%
 for pred_cat in PREDICTORES_CATEGORICOS:
@@ -209,19 +252,31 @@ for pred_cat in PREDICTORES_CATEGORICOS:
   # Frecuencias de la variable objetivo en cada clase del predictor categórico
   plt.figure(figsize = (12, 6))
   sns.barplot(x = COLUMNA_OBJETIVO, y = 'Cantidad', hue = pred_cat, data = frecuencias)
-  plt.title(f'Frecuencias de variable objectivo, por {pred_cat}')
+  plt.title(f'Frecuencias de variable objetivo, por "{pred_cat}"')
   plt.xticks(rotation = 45)
   plt.show()
 
   # Frecuencias de las clases del predictor categórico, en cada clase de la variable objetivo
   plt.figure(figsize = (12, 6))
   sns.barplot(x = pred_cat, y = 'Cantidad', hue = COLUMNA_OBJETIVO, data = frecuencias)
-  plt.title(f'Frecuencias de {pred_cat}, por {COLUMNA_OBJETIVO}')
+  plt.title(f'Frecuencias de "{pred_cat}", por "{COLUMNA_OBJETIVO}"')
   plt.xticks(rotation = 45)
   plt.show()
 
 # %% [markdown]
+# Notamos que todos los predictores categóricos satisfacen el escenario A
+# y el escenario B.1 . Sin embargo, ningún predictor categórico 
+# cumple el escenario B.2 .
+
+# %% [markdown]
 # ### Comparación entre variables numéricas y variable objetivo
+# 
+# Escenario:
+# 
+# Se espera que los predictores numéricos más importantes para la
+# predicción cumplan que sus distribuciones condicionales, respecto
+# a los valores (1 y 0) de la variable objetivo sean significativamente
+# diferentes.
 
 # %%
 for var_num in VARIABLES_NUMERICAS:
@@ -236,6 +291,12 @@ for var_num in VARIABLES_NUMERICAS:
   )
   plt.title(f'Distribución de "{var_num}", según valor de la variable objetivo')
   plt.show()
+
+# %% [markdown]
+# Notamos que todos los predictores numéricos satisfacen el escenario
+# planteado. Por otro lado, la variable numérica "instance weight" no
+# cumple tal escenario. Mas, aquella variable se ha documentado no 
+# emplearla como predictor.
 
 # %%
 # Correlación entre las variables numéricas
@@ -253,12 +314,28 @@ sns.heatmap(
 )
 plt.show()
 
+# %% [markdown]
+# No existe correlación lineal significativa entre ningún par de 
+# predictores numéricos diferentes, salvo por 
+# "num persons worked for employer" y "weeks worked in year",
+# pues presentan una correlación positiva de 0.75 .
+
 # %%
 sns.pairplot(datos[VARIABLES_NUMERICAS])
 
+# %% [markdown]
+# En el gráfico de dispersión, notamos que, pese a la 
+# correlación de 0.75 entre los predictores
+# numéricos "num persons worked for employer" y "weeks worked in year", 
+# no es un valor tan significativo como para evidenciarse gráficamente 
+# una recta que describa la interacción entre aquel par de predictores. 
+
+# Por ello, no descartaremos ninguno de ese par de predictores.
+
 # %%
-# Análisis de multicolinearidad entre predictores numéricos
-X = add_constant(datos[VARIABLES_NUMERICAS])
+# Análisis de multicolinearidad entre predictores numéricos,
+# por medio del factor de inflación de la varianza (VIF)
+X = add_constant(datos[PREDICTORES_NUMERICOS])
 
 vif_data = pd.DataFrame()
 vif_data["predictor"] = X.columns
@@ -266,3 +343,11 @@ vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape
 
 # No se requiere la variable artificial "const" como predictor
 vif_data.iloc[1:]
+
+# %% [markdown]
+# Como los VIF de los predictores numéricos son muy cercanos a 1, 
+# y menores que 3, concluimos que no existe multicolinearidad 
+# significativa entre los predictores numéricos.
+# 
+# Entonces, podemos emplear, más adelante, el modelo de regresión
+# logística e interpretar los coeficientes que produce tras ser entrenado.
