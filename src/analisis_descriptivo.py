@@ -12,6 +12,8 @@ from src.utils import (
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from statsmodels.tools.tools import add_constant
 
 # %%
 datos = (pd
@@ -234,3 +236,33 @@ for var_num in VARIABLES_NUMERICAS:
   )
   plt.title(f'Distribución de "{var_num}", según valor de la variable objetivo')
   plt.show()
+
+# %%
+# Correlación entre las variables numéricas
+matriz_de_correlaciones = datos[VARIABLES_NUMERICAS].corr()
+
+plt.figure(figsize = (10, 8))
+sns.heatmap(
+  matriz_de_correlaciones, 
+  annot = True, 
+  cmap = 'coolwarm', 
+  vmin = -1, 
+  vmax = 1, 
+  fmt = '.2f',
+  linewidths = 0.5
+)
+plt.show()
+
+# %%
+sns.pairplot(datos[VARIABLES_NUMERICAS])
+
+# %%
+# Análisis de multicolinearidad entre predictores numéricos
+X = add_constant(datos[VARIABLES_NUMERICAS])
+
+vif_data = pd.DataFrame()
+vif_data["predictor"] = X.columns
+vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(X.shape[1])]
+
+# No se requiere la variable artificial "const" como predictor
+vif_data.iloc[1:]
