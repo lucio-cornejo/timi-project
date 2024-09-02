@@ -4,6 +4,7 @@
 
 1. `src/notebooks/pre_procesamiento.ipynb`
 1. `src/notebooks/analisis_descriptivo.ipynb`
+1. `src/notebooks/modelos.ipynb`
 
 ## Recomendaciones del informe
 
