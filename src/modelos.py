@@ -132,12 +132,14 @@ X = pd.get_dummies(
 y = datos[COLUMNA_OBJETIVO]
 
 # %% [markdown]
-# ## Regresión logística
+# ## Entrenamiento de modelos
+
+# %% [markdown]
+# ### Regresión logística
 
 # %%
 from sklearn.linear_model import LogisticRegression
 
-# %%
 X_train_reg, X_test_reg, y_train_reg, y_test_reg = train_test_split(
   X, y, test_size = 0.2, random_state = RANDOM_STATE_REG
 )
@@ -148,6 +150,7 @@ estandarizador = StandardScaler()
 X_train_std = estandarizador.fit_transform(X_train_reg)
 X_test_std = estandarizador.transform(X_test_reg)
 
+# %%
 modelo_reg = LogisticRegression(max_iter = 1000, random_state = RANDOM_STATE_REG)
 modelo_reg.fit(X_train_std, y_train_reg)
 
@@ -178,7 +181,7 @@ y_pred_opt_reg = (y_pred_prob_reg >= punto_de_corte_optimo_reg) + 0
 mostrar_metricas_relevantes_del_modelo(y_test_reg, y_pred_opt_reg)
 
 # %% [markdown]
-# ### Importancia de los predictores
+# #### Importancia de los predictores
 
 # %%
 importancia_predictores_reg = pd.DataFrame({
@@ -202,16 +205,16 @@ PREDICTOR X_I EN DESVIACION_ESTANDAR(X_I), NO CAMBIO EN 1 NOMÁS.
 """
 
 # %% [markdown]
-# ## Bosque aleatorio
+# ### Bosque aleatorio
 
 # %%
 from sklearn.ensemble import RandomForestClassifier
 
-# %%
 X_train_bosque, X_test_bosque, y_train_bosque, y_test_bosque = train_test_split(
   X, y, test_size = 0.2, random_state = RANDOM_STATE_BOSQUE
 )
 
+# %%
 modelo_bosque = RandomForestClassifier(n_estimators = 100, random_state = RANDOM_STATE_BOSQUE)
 modelo_bosque.fit(X_train_bosque, y_train_bosque)
 
@@ -239,7 +242,7 @@ y_pred_opt_bosque = (y_pred_prob_bosque >= punto_de_corte_optimo_bosque) + 0
 mostrar_metricas_relevantes_del_modelo(y_test_bosque, y_pred_opt_bosque)
 
 # %% [markdown]
-# ### Importancia de los predictores
+# #### Importancia de los predictores
 
 # %%
 importancia_predictores_bosque = (pd.DataFrame({
@@ -260,7 +263,7 @@ plt.title("Importancia de los predictores en el modelo")
 plt.show()
 
 # %% [markdown]
-# ## XGBoost
+# ### XGBoost
 
 # %%
 import re
@@ -309,31 +312,34 @@ grid_search = GridSearchCV(
 grid_search.fit(X_train_xgb, y_train_xgb)
 
 # %%
-mejor_xgb = grid_search.best_estimator_
-mejor_xgb.fit(X_train_xgb, y_train_xgb)
+modelo_xgb = grid_search.best_estimator_
+modelo_xgb.fit(X_train_xgb, y_train_xgb)
 
 # %%
-y_pred_xgb = mejor_xgb.predict(X_test_xgb)
+y_pred_xgb = modelo_xgb.predict(X_test_xgb)
 mostrar_metricas_relevantes_del_modelo(y_test_xgb, y_pred_xgb)
 
 # %%
 graficar_curva_roc_con_auc(
   nombre_modelo = 'XGB',
-  modelo = mejor_xgb,
+  modelo = modelo_xgb,
   predictores_test = X_test_xgb,
   target_test = y_test_xgb
 )
 
 # %%
 punto_de_corte_optimo_xgb = optimizar_punto_de_corte_segun_criterio_de_youden(
-  mejor_xgb, X_test_xgb, y_test_xgb
+  modelo_xgb, X_test_xgb, y_test_xgb
 )
 print(f'Punto de corte óptimo: {punto_de_corte_optimo_xgb}')
 
-y_pred_prob_xgb = mejor_xgb.predict_proba(X_test_xgb)[:, 1]
+y_pred_prob_xgb = modelo_xgb.predict_proba(X_test_xgb)[:, 1]
 y_pred_opt_xgb = (y_pred_prob_xgb >= punto_de_corte_optimo_xgb) + 0
 
 mostrar_metricas_relevantes_del_modelo(y_test_xgb, y_pred_opt_xgb)
+
+# %% [markdown]
+# #### Importancia de los predictores
 
 # %%
 importancia_predictores_xgb = (pd.DataFrame({
@@ -341,7 +347,7 @@ importancia_predictores_xgb = (pd.DataFrame({
   # el mismo orden que en X. Emplearemos las columnas de X 
   # por consistencia con los modelos previos.
   'Predictor' : X.columns,
-  'Importancia': mejor_xgb.feature_importances_
+  'Importancia': modelo_xgb.feature_importances_
 })
   .sort_values('Importancia', ascending = True)
   # Seleccionar solo los 20 predictores más importantes
@@ -355,3 +361,155 @@ ax.barh(
 )
 plt.title("Importancia de los predictores en el modelo")
 plt.show()
+
+# %% [markdown]
+# ## Guardamos los modelos
+
+# %%
+import pickle
+
+# %%
+with open("modelos/modelo_reg.pkl", "wb") as model_file:
+  pickle.dump(modelo_reg, model_file)
+
+with open("modelos/modelo_bosque.pkl", "wb") as model_file:
+  pickle.dump(modelo_bosque, model_file)
+
+with open("modelos/modelo_xgb.pkl", "wb") as model_file:
+  pickle.dump(modelo_xgb, model_file)
+
+# %% [markdown]
+# ## Comparación de los modelos
+
+# %%
+with open("modelos/modelo_reg.pkl", "rb") as model_file:
+  modelo_reg = pickle.load(model_file)
+
+with open("modelos/modelo_bosque.pkl", "rb") as model_file:
+  modelo_bosque = pickle.load(model_file)
+
+with open("modelos/modelo_xgb.pkl", "rb") as model_file:
+  modelo_xgb = pickle.load(model_file)
+
+# %% [markdown]
+# ### Curvas ROC y valor AUC
+
+# %%
+from sklearn.metrics import auc
+
+plt.figure(figsize = (10, 8))
+
+modelos = [
+  {
+    'nombre' : 'Regresión logística',
+    'modelo' : modelo_reg,
+    'X_test' : X_test_std,
+    'y_test' : y_test_reg
+  },
+  {
+    'nombre' : 'Bosque aleatorio',
+    'modelo' : modelo_bosque,
+    'X_test' : X_test_bosque,
+    'y_test' : y_test_bosque
+  },
+  {
+    'nombre' : 'XGBoost',
+    'modelo' : modelo_xgb,
+    'X_test' : X_test_xgb,
+    'y_test' : y_test_xgb
+  }
+]
+
+for modelo_info in modelos:
+  y_prob_pred = modelo_info['modelo'].predict_proba(modelo_info['X_test'])[:, 1]
+  
+  fpr, tpr, _ = roc_curve(modelo_info['y_test'], y_prob_pred)
+  roc_auc = auc(fpr, tpr)
+  
+  plt.plot(
+    fpr, tpr, label = f'{modelo_info["nombre"]} (AUC = {roc_auc:.3f})'
+  )
+
+plt.plot([0, 1], [0, 1], 'k--', label = 'Clasificación aleatoria')
+
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel("1 - Especificidad")
+plt.ylabel("Sensibilidad")
+plt.title('Curvas ROC de los modelos entrenados')
+plt.legend(loc = "lower right")
+plt.grid()
+plt.show()
+
+# %% [markdown]
+# Del gráfico, notamos que las curvas ROC más cercanas al punto (0, 1),
+# que representa una exactitud total de 100%, son la asociada a XGBoost;
+# luego, la curva respectiva al bosque aleatorio; y, por último, la curva
+# ROC del modelo de regresión logística.
+# 
+# Esto sugiere que el modelo XGBoost podría ser más apropiado para la
+# predicción.
+# 
+# Por otro lado, los AUC de los modelos son altos, pues son mayores
+# que 0.9. Asimismo, el máximo AUC se halló para el modelo XGBoost, lo
+# cual refuerza su elección como el modelo por seleccionar.
+
+# %% [markdown]
+# ### Especificidad y el coeficiente de Kappa
+
+# %%
+metricas_modelos = pd.DataFrame({
+  'Modelo' : [modelo_info['nombre'] for modelo_info in modelos],
+  'Exactitud': [None, None, None],
+  'Sensibilidad': [None, None, None],
+  'Especificidad': [None, None, None],
+  'Coef_Kappa_Cohen': [None, None, None]
+})
+
+for modelo_index in metricas_modelos.index:
+  y_observado = modelos[modelo_index]['y_test']
+  y_predicho = modelos[modelo_index]['modelo'].predict(modelos[modelo_index]['X_test'])
+
+  tp, fn, fp, tn = confusion_matrix(y_observado, y_predicho, labels = [1, 0]).ravel()
+
+  metricas_modelos.loc[modelo_index, 'Exactitud'] = (tp + tn) / (tp + fp + tn + fn)
+  metricas_modelos.loc[modelo_index, 'Sensibilidad'] = tp / (tp + fn)
+  metricas_modelos.loc[modelo_index, 'Especificidad'] = tn / (tn + fp)
+  metricas_modelos.loc[modelo_index, 'Coef_Kappa_Cohen'] = cohen_kappa_score(y_observado, y_predicho)
+
+metricas_modelos
+
+# %% [markdown]
+# Entre los tres modelos, XGBoost produjo el mayor coeficiente de Kappa de 
+# Cohen, con un valor de aproximadamente 0.59, lo cual indica un nivel
+# **moderado** de acuerdo entre las observaciones y predicciones.
+# 
+# En ese sentido, el modelo XGBoost nos provee predicciones
+# que no se deben simplemente al azar ... hecho que se advirtió
+# en el análisis descriptivo, debido a que el porcentaje de personas
+# que sí deben pagar impuestos es tan pequeño (aproximadamente 6%).
+# 
+# Asimismo, resaltamos el hecho que el modelo XGBoost balancea mejor
+# que los otros dos modelos la sensibilidad y especificidad, produciendo
+# incluso valores mayores que 70% para ambas métricas.
+# 
+# Por último, destacamos el hecho que, pese al balance entre sensibilidad
+# y especificidad del modelo XGBoost, este produce una especificidad 
+# relativamente alta (aproximadamente 96%). Esto significa que el 
+# modelo XGBoost solo asigna erróneamente a 4% de las personas que no
+# tienen que pagar impuestos, como si sí tuviesen que pagar impuestos.
+# 
+# Minimizar aquel escenario (error de tipo I) es de mayor prioridad que
+# minimizar los errores de tipo II (asignar como que no debe pagar impuesto
+# a alquien que sí debe pagar), en el **contexto particular** del conjunto de datos.
+# 
+# Aquello por la posibilidad de demanda legal por parte de personas que
+# se hubiesen visto en la obligación de tener que pagar impuesto,
+# según la predicción del modelo, pese a que no era su responsabilidad.
+
+# %% [markdown]
+# ## Selección del modelo
+# 
+# En base a lo expuesto previamente, seleccionamos el modelo XGBoost
+# como el más adecuado para la predicción de si una persona debe 
+# pagar impuestos.
